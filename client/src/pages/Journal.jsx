@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 
 export default function Journal() {
+  const userName = "Anand"; // your logged-in username
+
   const [formData, setFormData] = useState({
-    name: "",
-    age: "",
     mood: 5,
     energy: 5,
     stress: 5,
@@ -16,6 +16,7 @@ export default function Journal() {
 
   const [showReport, setShowReport] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [analysis, setAnalysis] = useState("");
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -31,16 +32,59 @@ export default function Journal() {
     }
   };
 
+  const generateAnalysis = () => {
+    let feedback = "";
+
+    const mood = parseInt(formData.mood);
+    const stress = parseInt(formData.stress);
+    const sleepHours = parseInt(formData.sleep) || 0;
+
+    if (mood <= 4 && stress >= 7) {
+      feedback +=
+        "You seem to be going through a rough patch emotionally. Consider taking breaks, journaling, and reaching out to someone you trust. ";
+    } else if (mood >= 7 && stress <= 5) {
+      feedback +=
+        "Your emotional balance seems healthy. Keep nurturing this stability through gratitude, mindfulness, and self-care. ";
+    } else {
+      feedback +=
+        "You appear to be in a moderate emotional state. Reflect on what’s been affecting your mood, and try grounding techniques or a relaxing activity. ";
+    }
+
+    if (sleepHours < 6) {
+      feedback +=
+        "Your sleep seems insufficient — try to maintain a regular sleep routine and limit screen time before bed. ";
+    } else if (sleepHours >= 7 && sleepHours <= 9) {
+      feedback +=
+        "You’re getting a healthy amount of rest — continue prioritizing your sleep hygiene. ";
+    } else if (sleepHours > 9) {
+      feedback +=
+        "Oversleeping might indicate fatigue or stress. Try engaging in light exercise or social activity to boost energy. ";
+    }
+
+    if (formData.coping.length === 0) {
+      feedback +=
+        "You haven’t used many coping strategies today — consider exploring mindfulness, music, or physical movement to ease your mind.";
+    } else {
+      feedback += `It’s great that you’re coping through ${formData.coping.join(
+        ", "
+      )}. Keep using these methods to stay emotionally balanced.`;
+    }
+
+    return feedback;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     setProgress(0);
     setShowReport(false);
+    const feedbackText = generateAnalysis();
 
     const interval = setInterval(() => {
       setProgress((old) => {
         if (old >= 100) {
           clearInterval(interval);
           setShowReport(true);
+          setAnalysis(feedbackText);
           return 100;
         }
         return old + 10;
@@ -60,35 +104,13 @@ export default function Journal() {
           MindEase Journal
         </h1>
 
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold text-gray-800">{userName}</h2>
+        </div>
+
         {!showReport ? (
           <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Personal Info */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block font-semibold mb-2">Name</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                  className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-400 outline-none"
-                />
-              </div>
-              <div>
-                <label className="block font-semibold mb-2">Age</label>
-                <input
-                  type="number"
-                  name="age"
-                  value={formData.age}
-                  onChange={handleChange}
-                  required
-                  className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-400 outline-none"
-                />
-              </div>
-            </div>
-
-            {/* Mood Sliders */}
+            {/* Sliders */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {["mood", "energy", "stress"].map((key) => (
                 <div key={key}>
@@ -104,7 +126,9 @@ export default function Journal() {
                     onChange={handleChange}
                     className="w-full accent-blue-600"
                   />
-                  <p className="text-sm text-gray-600">Level: {formData[key]}</p>
+                  <p className="text-sm text-gray-600">
+                    Level: {formData[key]}
+                  </p>
                 </div>
               ))}
             </div>
@@ -128,29 +152,24 @@ export default function Journal() {
                 Emotions You Felt Today
               </label>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {[
-                  "Happy",
-                  "Sad",
-                  "Anxious",
-                  "Excited",
-                  "Tired",
-                  "Calm",
-                ].map((emotion) => (
-                  <label
-                    key={emotion}
-                    className="flex items-center gap-2 text-gray-700"
-                  >
-                    <input
-                      type="checkbox"
-                      name="emotions"
-                      value={emotion}
-                      checked={formData.emotions.includes(emotion)}
-                      onChange={handleChange}
-                      className="accent-purple-600"
-                    />
-                    {emotion}
-                  </label>
-                ))}
+                {["Happy", "Sad", "Anxious", "Excited", "Tired", "Calm"].map(
+                  (emotion) => (
+                    <label
+                      key={emotion}
+                      className="flex items-center gap-2 text-gray-700"
+                    >
+                      <input
+                        type="checkbox"
+                        name="emotions"
+                        value={emotion}
+                        checked={formData.emotions.includes(emotion)}
+                        onChange={handleChange}
+                        className="accent-purple-600"
+                      />
+                      {emotion}
+                    </label>
+                  )
+                )}
               </div>
             </div>
 
@@ -168,7 +187,10 @@ export default function Journal() {
                   "Sleep",
                   "Reading",
                 ].map((item) => (
-                  <label key={item} className="flex items-center gap-2 text-gray-700">
+                  <label
+                    key={item}
+                    className="flex items-center gap-2 text-gray-700"
+                  >
                     <input
                       type="checkbox"
                       name="coping"
@@ -183,7 +205,7 @@ export default function Journal() {
               </div>
             </div>
 
-            {/* Comments */}
+            {/* Notes */}
             <div>
               <label className="block font-semibold mb-2">Additional Notes</label>
               <textarea
@@ -208,6 +230,7 @@ export default function Journal() {
             </div>
           </form>
         ) : (
+          // Mental Health Report
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -217,7 +240,7 @@ export default function Journal() {
             {progress < 100 ? (
               <div className="mt-10">
                 <p className="text-gray-600 mb-4">
-                  Analyzing your emotions... please wait 💭
+                  Analyzing your emotional patterns... please wait 💭
                 </p>
                 <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
                   <motion.div
@@ -231,25 +254,13 @@ export default function Journal() {
             ) : (
               <div className="bg-gradient-to-br from-blue-50 to-white rounded-2xl shadow-lg p-8 mt-6">
                 <h2 className="text-2xl font-bold text-gray-800 mb-4">
-                  Your Personalized Wellness Report 🌿
+                  {userName}'s Personalized Wellness Report 🌿
                 </h2>
                 <p className="text-gray-700 mb-4">
-                  Hey {formData.name}, based on your responses:
+                  Hey {userName}, here’s your mental health summary:
                 </p>
-                <p className="text-gray-600 mb-2">
-                  Mood: <b>{formData.mood}/10</b>, Energy:{" "}
-                  <b>{formData.energy}/10</b>, Stress:{" "}
-                  <b>{formData.stress}/10</b>
-                </p>
-                <p className="text-gray-600 mb-2">
-                  You felt: {formData.emotions.join(", ") || "No emotions selected"}.
-                </p>
-                <p className="text-gray-600 mb-2">
-                  You coped using: {formData.coping.join(", ") || "No coping methods"}.
-                </p>
-                <p className="text-gray-600 mb-6">
-                  Sleep Duration: {formData.sleep || "N/A"}
-                </p>
+
+                <p className="text-gray-600 mb-4 leading-relaxed">{analysis}</p>
 
                 <p className="text-gray-700 italic mb-4">
                   "Remember — emotional ups and downs are part of being human.
